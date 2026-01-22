@@ -1,0 +1,228 @@
+# 🚗 Low-Level Design Question: Ultra-Scale Parking Lot Core
+
+## 🧠 Problem Statement (LLD Only)
+
+Design and implement the **core in-memory + persistent logic** of a **Parking Lot System** that guarantees **correct slot allocation under high concurrency**, supports **reservations**, and handles **offline gate replay** — **without ever allocating the same slot twice**.
+
+You are **not allowed** to rely on a single global lock.
+
+---
+
+## 🎯 Scope (Strictly LLD)
+
+You must design:
+
+* Core **classes**
+* **Interfaces**
+* **Thread-safe allocation logic**
+* **Reservation handling**
+* **Idempotency**
+* **Failure recovery logic**
+* **Concurrency tests (conceptual or code)**
+
+You do **not** need UI, REST controllers, or cloud infra.
+
+---
+
+## 🚘 Functional Requirements
+
+### 1️⃣ Slot Allocation (Core)
+
+* Support vehicle types: `BIKE`, `CAR`, `TRUCK`, `EV`
+* Slot types: `SMALL`, `MEDIUM`, `LARGE`, `EV`
+* Compatibility rules:
+
+  * BIKE → SMALL+
+  * CAR → MEDIUM+
+  * TRUCK → LARGE only
+  * EV → EV only
+* Allocation must be:
+
+  * **Thread-safe**
+  * **O(log n)** or better
+  * **Deterministic under retries**
+
+---
+
+### 2️⃣ Concurrency (Hard Requirement)
+
+* System must handle **hundreds of concurrent entry requests** from multiple gates.
+* **No two vehicles may receive the same slot**, even if:
+
+  * Two threads race
+  * One thread crashes mid-allocation
+  * Requests are retried
+
+⚠️ You **may not** use:
+
+* One giant `synchronized` block
+* A single global mutex
+
+---
+
+### 3️⃣ Reservations (Race Condition Trap)
+
+* A reservation:
+
+  * Holds a slot for `N` minutes
+  * Expires automatically
+* Priority order:
+
+  1. Monthly pass
+  2. Active reservation
+  3. Walk-in
+* Allocation must **atomically respect reservations**
+* Reservation expiration must **safely release slots under concurrency**
+
+---
+
+### 4️⃣ Offline Gate Replay (Very Hard)
+
+* A gate may go offline and:
+
+  * Allocate slots locally
+  * Generate temporary tickets
+* When it reconnects:
+
+  * It **replays allocation events**
+  * System must:
+
+    * Detect duplicates
+    * Resolve conflicts deterministically
+    * Never corrupt state
+
+---
+
+### 5️⃣ Idempotency
+
+* Multiple `park(vehicle)` calls with same input **must not create multiple tickets**
+* Duplicate retries must return the **same result**
+* Idempotency must work across restarts
+
+---
+
+## 🧩 Required Classes & Interfaces
+
+You must define (at minimum):
+
+```java
+class ParkingLot
+class ParkingLevel
+class ParkingSlot
+class Vehicle
+class Ticket
+class Reservation
+```
+
+```java
+interface SlotAllocator {
+    Optional<ParkingSlot> allocate(Vehicle vehicle, AllocationContext ctx);
+    void release(String slotId);
+}
+
+interface ReservationManager {
+    Reservation reserve(...);
+    void expireReservations();
+}
+
+interface AllocationJournal {
+    void recordIntent(...);
+    void commit(...);
+    void rollback(...);
+}
+```
+
+---
+
+## 🔒 Consistency & Safety Rules
+
+* Allocation must be:
+
+  * **Atomic**
+  * **Durable**
+  * **Idempotent**
+* Slot state transitions must follow:
+
+  ```
+  FREE → RESERVED → OCCUPIED → FREE
+  ```
+* Illegal transitions must be impossible even under race conditions.
+
+---
+
+## ⚙️ Constraints (Interview Killers)
+
+* Allocation must complete in **< 50ms**
+* Slot selection must be **pluggable**:
+
+  * Nearest
+  * Lowest floor
+  * EV-first
+* Reservation expiry must not block allocation threads
+* No busy-waiting loops
+
+---
+
+## 🧪 Required Test Scenarios (Explain or Code)
+
+1. **Concurrency Storm**
+
+   * 500 parallel `allocate()` calls
+   * Assert:
+
+     * No duplicate slot IDs
+     * Occupied count == capacity
+
+2. **Crash Mid-Allocation**
+
+   * Crash after slot selected but before commit
+   * On restart:
+
+     * System must recover to a valid state
+
+3. **Offline Replay**
+
+   * Gate allocates 50 slots offline
+   * Replays after reconnect
+   * Conflicts resolved deterministically
+
+4. **Reservation Contention**
+
+   * 20 reservations for 5 slots
+   * Exactly 5 succeed
+
+---
+
+## 🚨 Explicitly What Interviewer Is Testing
+
+| Area                              | Why it’s hard                  |
+| --------------------------------- | ------------------------------ |
+| Lock-free / fine-grained locking  | Most candidates over-lock      |
+| Idempotency                       | Rarely implemented correctly   |
+| WAL / journal thinking            | Production-level mindset       |
+| Reservation race handling         | Easy to get wrong              |
+| Deterministic conflict resolution | Real distributed systems skill |
+
+---
+
+## 🏆 Toughness Scale (Flagship Companies)
+
+| Company  | Expected Performance         |
+| -------- | ---------------------------- |
+| Google   | Full correctness + tradeoffs |
+| Uber     | Strong concurrency + replay  |
+| Stripe   | Idempotency + state machine  |
+| Amazon   | Failure handling + tests     |
+| Razorpay | Allocation + reservations    |
+
+**Failing any one of these = rejection** at senior levels.
+
+---
+
+If you want next:
+
+* ✅ **Perfect reference solution (Java)**
+* ✅ **How to explain this in interview step-by-step**
+* ✅ **Common mistakes interviewers instantly reject**
+
+Tell me which one.
