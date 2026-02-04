@@ -1,0 +1,181 @@
+Below is a comprehensive, **very hard Low-Level Design (LLD) problem statement** for a **Car Rental System** suitable for senior software engineer interviews or advanced design assignments. It incorporates detailed functional, non-functional, and edge-case requirements and aligns with real industry expectations for object-oriented design depth and complexity.
+
+---
+
+# **Low-Level Design Problem Statement: Car Rental System**
+
+## **Background**
+
+Design and implement a **Car Rental Management System** that enables customers and administrators to interact with the system for searching, reserving, renting, managing, and returning vehicles. The system should support real-world business rules, extensibility, and maintainability. This is not a high-level architecture task; the goal is to specify **classes, interfaces, patterns, relationships, behaviors, and constraints** along with their interactions and obligations. ([Medium][1])
+
+The system must be amenable to implementation in an object-oriented language such as Java, C#, or Python and should be ready for coding with minimal ambiguity.
+
+---
+
+## **Core Functional Requirements**
+
+### **1. Users & Roles**
+
+* **Customer**
+
+  * Register, authenticate, view profile
+  * Search vehicles with multiple criteria
+  * Reserve vehicles
+  * Cancel reservations
+  * Extend rental durations
+  * Add optional services (insurance, extra driver, GPS, child seat)
+* **Admin**
+
+  * Add, update, remove vehicles
+  * Manage pricing and seasonal rates
+  * Approve or reject reservations
+  * View reports (active rentals, returns, revenue)
+* **Maintenance**
+
+  * Track service/repair history
+  * Mark vehicles unavailable for maintenance
+  * Request re-inspection after service
+
+### **2. Vehicle Catalog**
+
+Support multiple vehicle types—cars, vans, SUVs, motorcycles, premium vehicles. Each vehicle record includes:
+
+* Unique identifier and VIN/barcode
+* Make, model, category, seating, fuel type, transmission
+* Daily/hourly rental rates
+* Status (available, reserved, rented, under maintenance)
+* Location context (multiple branches or hubs) ([GitHub][2])
+
+### **3. Search & Availability**
+
+Customers must be able to query available vehicles using:
+
+* Date & time range
+* Vehicle type/category
+* Price range
+* Location (branch) constraints
+
+The system should efficiently filter availability based on existing reservations and maintenance statuses.
+
+### **4. Reservation Lifecycle**
+
+* Calculate estimated cost with optional add-ons and insurance
+* Generate a unique reservation ID
+* Hold vehicle availability until confirmed
+* Allow cancellation before a threshold period (e.g., 24 hrs)
+
+### **5. Rental Execution**
+
+* Transition from reservation to active rental
+* Validate driver credentials (license verification)
+* Apply late fees if the vehicle is returned after due time
+* Support real-time pickup and return timestamps
+
+### **6. Billing & Payments**
+
+* Support multiple payment modes (credit, debit, UPI, wallet)
+* Store transaction status (paid, pending, failed)
+* Compute final bill including late fees and extras
+
+### **7. Optional Services**
+
+* Add insurance plans
+* Add additional drivers
+* Add extra equipment (e.g., child seat, GPS)
+* Price rules apply (flat fee, per day, per rental) ([LeetCode][3])
+
+---
+
+## **Detailed Design Expectations**
+
+### **A. Class Definitions**
+
+You must define all pertinent classes and interfaces with attributes and methods, including but not limited to:
+
+* `Vehicle`, `Car`, `SUV`, `Motorcycle`
+* `User`, `Customer`, `Admin`, `MaintenanceStaff`
+* `Reservation`, `RentalAgreement`, `Invoice`
+* `PricingStrategy`, `InsurancePlan`, `ExtraService`
+* `PaymentProcessor`, `PaymentMethod` (Strategy Pattern)
+* `Location`, `BranchInventory`, `AvailabilityCalendar`
+
+Show how polymorphism, composition, and aggregation are used. Explicitly document relationships between classes (inheritance, association, dependency).
+
+### **B. Design Patterns**
+
+You must decide and justify where to use at least the following patterns:
+
+* **Factory Pattern** for vehicle creation
+* **Strategy Pattern** for pricing and payment methods
+* **Singleton or Repository Pattern** for managing shared inventories
+* **Observer Pattern** for notifying users of reservation changes
+* **State Pattern** for vehicle state transitions (available, reserved, rented, maintenance)
+
+### **C. Concurrency & Integrity**
+
+* Only one reservation may succeed for a vehicle at overlapping times.
+* Reservation engine must handle concurrent requests with thread safety.
+* Implement optimistic locking or a comparable mechanism to prevent “double booking.”
+
+### **D. Persistence Layer**
+
+Design class representations for persistent entities that map to a relational schema. Include:
+
+* Primary and foreign keys
+* Cardinality (one-to-many, many-to-many)
+* Normalization constraints
+
+You should specify tables or ORM entities, indexes, and query considerations for frequent operations (search, availability check).
+
+---
+
+## **Non-Functional Requirements**
+
+### **1. Performance**
+
+* Availability queries must return in < 200ms for < 10k concurrent users.
+* Reservation transactions must complete within 300ms under contention.
+
+### **2. Scalability**
+
+* The design must allow horizontal scaling (micro-services if applicable) by decoupling inventory, payment, and reservation modules.
+
+### **3. Maintainability**
+
+* The system should adhere to SOLID principles.
+* Modules must be loosely coupled and independently testable. ([Wikipedia][4])
+
+### **4. Extensibility**
+
+* New vehicle types or services should be pluggable with minimal disruption.
+* Pricing rules may change seasonally or dynamically; design should isolate pricing logic.
+
+---
+
+## **Edge Cases & Constraints**
+
+* Prevent rental overlaps across multiple branches (fleet movement).
+* Late returns before the next booking must still enforce penalty rules.
+* Seasonal pricing adjustments and promotional discounts apply.
+* Insurance or add-ons may expire mid-rental (prorated billing)
+* Grace periods for reservation holds and cancellations
+
+---
+
+## **Deliverables**
+
+Deliverables for this problem include:
+
+1. **Complete class diagram** with relationships and cardinalities
+2. **UML sequence diagrams** for core flows: search → reserve → rent → return → payment
+3. **Pseudocode or interface definitions** for key components
+4. **Justification of design choices** (patterns, concurrency control, persistence)
+
+---
+
+If required, I can also generate **complete solutions** (class diagrams, code skeletons in Java/C#/Python, and sequence diagrams) based on this problem statement.
+
+[1]: https://medium.com/curious-developer/most-asked-lld-interview-questions-e03034c52ba6?utm_source=chatgpt.com "Commonly Asked Low-Level Design (LLD) Interview ..."
+[2]: https://github.com/tssovi/grokking-the-object-oriented-design-interview/blob/master/object-oriented-design-case-studies/design-a-car-rental-system.md?utm_source=chatgpt.com "Design a Car Rental System"
+[3]: https://leetcode.com/discuss/interview-question/object-oriented-design/2088654/vehicle-rental-system-lld-feedback-welcome/?utm_source=chatgpt.com "Vehicle Rental System | LLD | Feedback welcome - Discuss"
+[4]: https://en.wikipedia.org/wiki/Non-functional_requirement?utm_source=chatgpt.com "Non-functional requirement"
